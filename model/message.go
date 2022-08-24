@@ -22,5 +22,4 @@ func (msg Message) SaveMessage() {
 
 func (msg Message) GetMessages() []Message {
 	return message
-
 }

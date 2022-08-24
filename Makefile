@@ -1,5 +1,4 @@
 GOLANGCI_LINT_VERSION=v1.44
-DB_URL=postgresql://postgres:pgsecret@localhost:55432/catalog_service?sslmode=disable
 
 .PHONY: list
 list:
@@ -30,19 +29,24 @@ lint:
 
 .PHONY: mac_amd64_build
 mac_amd64_build:
-	env GOOS=darwin GOARCH=amd64 go build -o distapp .
+	env GOOS=darwin GOARCH=amd64 go build -o bin/distapp .
 
 .PHONY: linux_build
 linux_build:
-	env GOOS=linux GOARCH=amd64 go build -o distapp .
+	env GOOS=linux GOARCH=amd64 go build -o bin/distapp .
 
 .PHONY: docker_build
 docker_build:
 	docker build -t distapp:0.0.1 .
 
-.PHONY: distapp
-distapp:
+.PHONY: rm_docker_image
+rm_docker_image:
+	docker rmi distapp:0.0.1
 
+.PHONY: deploy
+deploy:
+	./deploy.sh -n 3
 
-.PHONY: delete_docker
-delete_docker:
+.PHONY: destroy
+destroy:
+	./deploy.sh -d

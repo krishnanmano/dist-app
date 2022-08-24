@@ -1,13 +1,15 @@
 package controllers
 
 import (
+	"encoding/json"
+	"log"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+
 	memlist "dist-app/memberlist"
 	"dist-app/model"
 	"dist-app/service"
-	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"log"
-	"net/http"
 )
 
 type DistappController struct {
@@ -15,9 +17,9 @@ type DistappController struct {
 	gossipNode memlist.GossipNode
 }
 
-func NewDistappController(service service.IDistAppService, gossipNode memlist.GossipNode) *DistappController {
+func NewDistappController(srvs service.IDistAppService, gossipNode memlist.GossipNode) *DistappController {
 	return &DistappController{
-		service:    service,
+		service:    srvs,
 		gossipNode: gossipNode,
 	}
 }
@@ -45,7 +47,7 @@ func (dac DistappController) SaveMessage(c *gin.Context) {
 	dac.service.SaveMessage(msg)
 	msgByteArr, err := json.Marshal(msg)
 	if err != nil {
-		log.Println("marshalling failed: ", err)
+		log.Println("marshaling failed: ", err)
 	}
 
 	dac.gossipNode.HandleMessage(msgByteArr)

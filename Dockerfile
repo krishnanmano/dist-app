@@ -2,7 +2,7 @@ FROM alpine:3.14
 
 WORKDIR /app
 
-COPY ./distapp .
+COPY ./bin/distapp .
 
 EXPOSE $APP_PORT
 EXPOSE $GOSSIP_PORT

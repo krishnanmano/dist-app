@@ -17,6 +17,7 @@ function deploy() {
   docker run -d -p8080:8080 -p7960:7960 -e APP_PORT=8080 -e GOSSIP_PORT=7960 --name ${init_instance_name} distapp:0.0.1
   distapp01_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${init_instance_name})
 
+  numberOfInstances=$((numberOfInstances-1))
   for count in $(seq -f %02g 01 ${numberOfInstances})
   do
     exposeable_app_port=$(echo "8080 + ${count}" | bc -l)

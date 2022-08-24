@@ -3,10 +3,11 @@ package memberlist
 import (
 	"bytes"
 	"fmt"
-	"github.com/hashicorp/memberlist"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/hashicorp/memberlist"
 )
 
 type GossipNode struct {
@@ -14,7 +15,7 @@ type GossipNode struct {
 	httpClient *http.Client
 }
 
-func NewGossipNode(bindPort int, leader string, appPort string) GossipNode {
+func NewGossipNode(bindPort int, leader, appPort string) GossipNode {
 	list := CreateInitMemberList(bindPort)
 	node := GossipNode{
 		memberlist: list,
@@ -60,9 +61,9 @@ func (node GossipNode) clusterinfo() {
 	fmt.Printf("Cluster HealthScore: %d\n", node.memberlist.GetHealthScore())
 }
 
-func (node GossipNode) GracefullyLeave() {
+func (node GossipNode) GracefullyLeave(timeout time.Duration) {
 	log.Println("gossip service: graceful exit initiated...")
-	if err := node.memberlist.Leave(time.Second * 5); err != nil {
+	if err := node.memberlist.Leave(timeout); err != nil {
 		log.Println("gossip service failed to exit gracefully", err)
 	}
 	log.Println("gossip service: gracefully exited...")
@@ -77,15 +78,17 @@ func (node *GossipNode) HandleMessage(msg []byte) {
 		}
 
 		url := fmt.Sprintf("http://%s:%s/gossip/api/publish", member.Addr, string(member.Meta))
-		resp, err := node.httpClient.Post(url, "application/json", bytes.NewBuffer(msg))
-
+		resp, err := node.httpClient.Post(url, "application/json", bytes.NewBuffer(msg)) //nolint
 		if err != nil {
 			continue
 		}
 
 		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
 			continue
 		}
+
+		resp.Body.Close()
 		break
 	}
 }

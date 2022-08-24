@@ -1,19 +1,21 @@
 package controllers
 
 import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+
 	"dist-app/model"
 	"dist-app/service"
-	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 type GossipController struct {
 	service service.IDistAppService
 }
 
-func NewGossipController(service service.IDistAppService) *GossipController {
+func NewGossipController(srvs service.IDistAppService) *GossipController {
 	return &GossipController{
-		service: service,
+		service: srvs,
 	}
 }
 

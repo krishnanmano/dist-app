@@ -20,8 +20,8 @@ import (
 var router *gin.Engine
 
 const (
-	GracefulShutdownTimeout = 5
-	ReadHeaderTimeout       = 1 * time.Millisecond
+	GracefulShutdownTimeout = 5 * time.Second
+	RequestHeaderTimeout    = 500 * time.Millisecond
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 	flag.StringVar(&appPort, "app-port", "8080", "port to initiate app instance")
 
 	var gossipPort int
-	flag.IntVar(&gossipPort, "gossip-port", 7950, "port to initiate app instance")
+	flag.IntVar(&gossipPort, "gossip-port", 7950, "port to initiate app instance") //nolint
 
 	var gossipLeader string
 	flag.StringVar(&gossipLeader, "gossip-leader", "", "leader service 'ip:port'")
@@ -45,8 +45,9 @@ func main() {
 	mapurls(distAppController, gossipController)
 
 	server := &http.Server{
-		Addr:    ":" + appPort,
-		Handler: router,
+		Addr:              ":" + appPort,
+		Handler:           router,
+		ReadHeaderTimeout: RequestHeaderTimeout,
 	}
 
 	go func() {
@@ -67,7 +68,6 @@ func mapurls(distAppController *controllers.DistappController, gossipController 
 	gossipGroup := router.Group("/gossip/api")
 	gossipGroup.GET("/health", gossipController.Health)
 	gossipGroup.POST("/publish", gossipController.PublishMessage)
-
 }
 
 func gracefulShutdown(server *http.Server, gossipNode memlist.GossipNode) {
@@ -76,12 +76,12 @@ func gracefulShutdown(server *http.Server, gossipNode memlist.GossipNode) {
 	<-quit
 
 	log.Println("Shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), GracefulShutdownTimeout*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), GracefulShutdownTimeout)
 	defer cancel()
 	if err := server.Shutdown(ctx); err != nil {
 		log.Println("Server forced to shutdown:", err)
 	}
 	log.Println("Server exiting")
 
-	gossipNode.GracefullyLeave()
+	gossipNode.GracefullyLeave(GracefulShutdownTimeout)
 }
