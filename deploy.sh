@@ -30,8 +30,12 @@ function deploy() {
 
 function destroy() {
   set -xe
-	docker stop $(docker container ls -a -f "name=${INSTANCE_PREFIX}*" --format '{{.Names}}')
-	docker rm $(docker container ls -a -f "name=${INSTANCE_PREFIX}*" --format '{{.Names}}')
+  count=$(docker container ls -a -f "name=${INSTANCE_PREFIX}*" --format '{{.Names}}' | wc -l | sed 's/^ *//g')
+  if [ "${count}" -gt 0 ]
+  then
+    docker stop $(docker container ls -a -f "name=${INSTANCE_PREFIX}*" --format '{{.Names}}')
+    docker rm $(docker container ls -a -f "name=${INSTANCE_PREFIX}*" --format '{{.Names}}')
+  fi
 	set +xe
 }
 

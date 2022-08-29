@@ -2,6 +2,8 @@ package memberlist
 
 import (
 	"bytes"
+	"dist-app/model"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -69,7 +71,12 @@ func (node GossipNode) GracefullyLeave(timeout time.Duration) {
 	log.Println("gossip service: gracefully exited...")
 }
 
-func (node *GossipNode) HandleMessage(msg []byte) {
+func (node *GossipNode) HandleMessage(msg *model.PublishEvent) {
+	dataInBytes, err := json.Marshal(msg)
+	if err != nil {
+		log.Println("marshaling failed: ", err)
+	}
+
 	for _, member := range node.memberlist.Members() {
 		fmt.Printf("List Member %s, %s, %d\n", member.Name, member.Addr, member.Port)
 
@@ -78,7 +85,7 @@ func (node *GossipNode) HandleMessage(msg []byte) {
 		}
 
 		url := fmt.Sprintf("http://%s:%s/gossip/api/publish", member.Addr, string(member.Meta))
-		resp, err := node.httpClient.Post(url, "application/json", bytes.NewBuffer(msg)) //nolint
+		resp, err := node.httpClient.Post(url, "application/json", bytes.NewBuffer(dataInBytes)) //nolint
 		if err != nil {
 			continue
 		}

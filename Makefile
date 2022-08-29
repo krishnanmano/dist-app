@@ -36,7 +36,7 @@ linux_build:
 	env GOOS=linux GOARCH=amd64 go build -o bin/distapp .
 
 .PHONY: docker_build
-docker_build:
+docker_build: linux_build
 	docker build -t distapp:0.0.1 .
 
 .PHONY: rm_docker_image
@@ -44,9 +44,13 @@ rm_docker_image:
 	docker rmi distapp:0.0.1
 
 .PHONY: deploy
-deploy:
-	./deploy.sh -n 3
+deploy: linux_build docker_build
+	./deploy.sh -n 2
 
 .PHONY: destroy
 destroy:
 	./deploy.sh -d
+
+.PHONY: clean
+clean: destroy rm_docker_image
+	rm -rf ./bin

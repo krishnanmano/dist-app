@@ -10,12 +10,12 @@ import (
 )
 
 type GossipController struct {
-	service service.IDistAppService
+	txnService service.ITransactionService
 }
 
-func NewGossipController(srvs service.IDistAppService) *GossipController {
+func NewGossipController(txnSrvs service.ITransactionService) *GossipController {
 	return &GossipController{
-		service: srvs,
+		txnService: txnSrvs,
 	}
 }
 
@@ -26,16 +26,25 @@ func (dac GossipController) Health(c *gin.Context) {
 }
 
 func (dac GossipController) PublishMessage(c *gin.Context) {
-	var msg model.Message
-	if err := c.ShouldBind(&msg); err != nil {
+	var event model.PublishEvent
+	if err := c.ShouldBind(&event); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "invalid message passed",
 		})
 		return
 	}
 
-	dac.service.SaveMessage(msg)
-	c.JSON(http.StatusCreated, gin.H{
-		"status": "inserted",
-	})
+	switch event.EventType {
+	case model.CREATE, model.UPDATE:
+		savedMsg, err := dac.txnService.SaveTransaction(c, &event.Transaction)
+		if err != nil {
+			c.JSON(
+				http.StatusInternalServerError,
+				model.NewErrorMsg(http.StatusBadRequest, "internal server error", err.Error()),
+			)
+			return
+		}
+		c.JSON(http.StatusOK, savedMsg)
+	}
+
 }
